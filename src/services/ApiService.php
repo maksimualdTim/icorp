@@ -35,7 +35,7 @@ class ApiService
      */
     public function __construct(string $clientId, string $clientSecret, string $redirectUri)
     {
-        $this->db = new Db(__DIR__. '/../db/tokens.sql', SQLITE3_OPEN_CREATE | SQLITE3_OPEN_READWRITE);
+        $this->db = new Db(__DIR__. '/../db/users.sql', SQLITE3_OPEN_CREATE | SQLITE3_OPEN_READWRITE);
         $this->provider = new AmoCRM([
             'clientId' => $clientId,
             'clientSecret' => $clientSecret,
@@ -63,11 +63,11 @@ class ApiService
      */
     public function setToken(): void
     {
-        if (isset($_GET['client_id']) && $_GET['client_id']){
-            $client_id = $_GET['client_id'];
+        if (isset($_GET['account_id']) && $_GET['account_id']){
+            $account_id = $_GET['account_id'];
 
-            $statement = $this->db->prepare('SELECT * FROM users WHERE "client_id"=:client_id AND "baseDomain"=:base_domain');
-            $statement->bindValue(':client_id', $client_id);
+            $statement = $this->db->prepare('SELECT * FROM users WHERE "account_id"=:account_id AND "baseDomain"=:base_domain');
+            $statement->bindValue(':account_id', $account_id);
             $statement->bindValue(':base_domain', $this->provider->getBaseDomain());
             $result = $statement->execute();
             $data = $result->fetchArray(SQLITE3_ASSOC);
@@ -78,7 +78,7 @@ class ApiService
             $this->accessToken = new AccessToken([
                 'access_token' => $data['access_token'],
                 'refresh_token' => $data['refresh_token'],
-                'resource_owner_id' => $data['client_id'],
+                'resource_owner_id' => $data['account_id'],
                 'expires' => $data['access_token_expires_at'],
             ]);
 
@@ -99,8 +99,8 @@ class ApiService
             $this->accessToken = $this->provider->getAccessToken('authorization_code', [
                 'code' => $_GET['authorization_code']
             ]);
-            $user = $this->provider->getResourceOwner($this->accessToken);
-            $this->saveToken($user);
+            $account = $this->getAccountInfo();
+            $this->saveToken($account);
         }
         else
             throw new \Exception('authorization_code required!');
@@ -108,16 +108,16 @@ class ApiService
 
     /**
      * Save token to DB
-     * @param AmoCRMResourceOwner $user
+     * @param array $account
      * @return void
      */
-    public function saveToken(AmoCRMResourceOwner $user): void
+    public function saveToken(array $account): void
     {
         $statement = $this->db->prepare('INSERT INTO 
-        users ("client_id", "access_token", "refresh_token", "baseDomain", "access_token_expires_at", "refresh_token_expires_at") 
-        VALUES (:client_id, :access_token, :refresh_token, :baseDomain, :access_token_expires_at, :refresh_token_expires_at)');
+        users ("account_id", "access_token", "refresh_token", "baseDomain", "access_token_expires_at", "refresh_token_expires_at") 
+        VALUES (:account_id, :access_token, :refresh_token, :baseDomain, :access_token_expires_at, :refresh_token_expires_at)');
         $statement->bindValue(':access_token', $this->accessToken->getToken());
-        $statement->bindValue(':client_id', $user->getId());
+        $statement->bindValue(':account_id', $account['id']);
         $statement->bindValue(':refresh_token', $this->accessToken->getRefreshToken());
         $statement->bindValue(':baseDomain', $this->provider->getBaseDomain());
         $statement->bindValue(':access_token_expires_at', $this->accessToken->getExpires());
@@ -126,16 +126,16 @@ class ApiService
     }
 
     /**
-     * @param int $client_id
+     * @param int $account_id
      * @return void
      */
-    public function updateToken(int $client_id)
+    public function updateToken(int $account_id)
     {
         $statement = $this->db->prepare(' UPDATE users SET "access_token"=:access_token, 
                   "refresh_token"=:refresh_token, "access_token_expires_at"=:access_token_expires_at, 
-                  "refresh_token_expires_at"=:refresh_token_expires_at WHERE "client_id"=:client_id AND "baseDomain"=:baseDomain');
+                  "refresh_token_expires_at"=:refresh_token_expires_at WHERE "account_id"=:account_id AND "baseDomain"=:baseDomain');
         $statement->bindValue(':access_token', $this->accessToken->getToken());
-        $statement->bindValue(':client_id', $client_id);
+        $statement->bindValue(':account_id', $account_id);
         $statement->bindValue(':refresh_token', $this->accessToken->getRefreshToken());
         $statement->bindValue(':baseDomain', $this->provider->getBaseDomain());
         $statement->bindValue(':access_token_expires_at', $this->accessToken->getExpires());
@@ -149,12 +149,12 @@ class ApiService
      */
     public function refreshToken(): void
     {
-        $client_id = $this->accessToken->getResourceOwnerId();
+        $account_id = $this->accessToken->getResourceOwnerId();
         $this->accessToken = $this->provider->getAccessToken(new RefreshToken(), [
             'refresh_token' => $this->accessToken->getRefreshToken(),
         ]);
 
-        $this->updateToken($client_id);
+        $this->updateToken($account_id);
     }
 
     /**
@@ -163,5 +163,18 @@ class ApiService
     public function getProvider(): AmoCRM
     {
         return $this->provider;
+    }
+
+    /**
+     * returns account information
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function getAccountInfo(): array
+    {
+        $data = $this->provider->getHttpClient()->request('GET', $this->provider->urlAccount() . 'api/v4/account', [
+            'headers' => $this->provider->getHeaders($this->accessToken)
+        ]);
+        return json_decode($data->getBody()->getContents(), true);
     }
 }

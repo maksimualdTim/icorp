@@ -1,7 +1,7 @@
 <?php
 
 namespace App\services;
-
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 class AmoApiService
 {
     private ApiService $api;
@@ -11,10 +11,11 @@ class AmoApiService
         $this->api = new ApiService($config['clientId'], $config['clientSecret'], $config['redirectUri']);
     }
 
-    public function getUserInfo()
+    public function getUserInfo(): ResourceOwnerInterface
     {
         return $this->api->provider->getResourceOwner($this->api->accessToken);
     }
+
     public function getLeads()
     {
 

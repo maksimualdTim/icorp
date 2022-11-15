@@ -1,6 +1,5 @@
 <?php
 use App\services\AmoApiService;
-use App\services\Db;
 
 header('Access-Control-Allow-Origin: *');
 
@@ -11,4 +10,3 @@ $service = new AmoApiService([
     'clientSecret' => 'gQ38ggVfwZfuo9cR8G2XstAdXLUWf1SQeq6ABj8dnOYx5yhnuacORX3vsMRQ7job',
     'redirectUri' => 'https://10c9-82-215-98-110.eu.ngrok.io',
 ]);
-
