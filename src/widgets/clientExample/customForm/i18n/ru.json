@@ -1,0 +1,17 @@
+{
+  "widget": {
+    "name": "CustomForm",
+    "short_description": "Виджет для отсылки данных клиентов с формы на сайте в amoCrm",
+    "description": "Виджет, который служит для отправки данных потенциальных клиентов с формы вашего сайта в систему amoCrm"
+  },
+  "settings": {
+    "login": "Логин",
+    "password": "Пароль"
+  },
+  "userLang": {
+    "firstWidgetText": "Кликните на кнопку, чтобы переслать данные на сторонний сервер:",
+    "textIntoTheButton": "Отправить данные",
+    "responseMessage": "Ответ сервера :",
+    "responseError": "Ошибка"
+  }
+}

@@ -1,0 +1,5 @@
+<div class="amoforms__code amoforms__form_code">
+    <script>
+        function loadJquery(){let t=document.createElement("script");t.src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js",t.type="text/javascript",t.addEventListener("load",()=>{exec()}),document.head.appendChild(t)}function exec(){let t=$("#amo_widget_custom_form").parent().closest("form");$(t).submit(function(e){e.preventDefault(),$.post("http://localhost:8090?account_id={{account_id}}&referer={{ referer }}",findData(t),function(t,e){$(this).unbind("submit").submit(),location.reload()})})}function findData(t){let e={},a=function(t){void 0!==$(t).attr("name")?e[$(t).attr("name").toLowerCase()]=$(t).val():void 0!==$(t).attr("placeholder")&&(e[$(t).attr("placeholder").toLowerCase()]=$(t).val())};return $(t).find("input").each(function(){a(this)}),$(t).find("textarea").each(function(){a(this)}),e}window.onload=function(){window.jQuery?exec():loadJquery()};
+    </script>
+</div>
