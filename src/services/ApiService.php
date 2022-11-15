@@ -95,15 +95,15 @@ class ApiService
      */
     public function fetchToken(): void
     {
-        if (isset($_GET['authorization_code']) && $_GET['authorization_code']){
-            $this->accessToken = $this->provider->getAccessToken('authorization_code', [
-                'code' => $_GET['authorization_code']
+        if (isset($_GET['code']) && $_GET['code']){
+            $this->accessToken = $this->provider->getAccessToken('code', [
+                'code' => $_GET['code']
             ]);
             $account = $this->getAccountInfo();
             $this->saveToken($account);
         }
         else
-            throw new \Exception('authorization_code required!');
+            throw new \Exception('code required!');
     }
 
     /**
